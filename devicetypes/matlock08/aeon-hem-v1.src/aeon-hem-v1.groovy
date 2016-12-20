@@ -1,3 +1,5 @@
+import java.text.SimpleDateFormat
+
 /**
  *  Aeon HEM V1
  *
@@ -23,6 +25,7 @@ metadata {
 		attribute "energyCost", "string"
         
         command "reset"
+        command "configure"
 
 		fingerprint deviceId: "0x2101", inClusters: "0x70,0x31,0x72,0x86,0x32,0x80,0x85,0x60"
 	}
@@ -56,12 +59,13 @@ metadata {
 		standardTile("refresh", "power", inactiveLabel: false, decoration: "flat") {
 			state "default", label:'', action:"refresh.refresh", icon:"st.secondary.refresh"
 		}
+        standardTile("configure", "command.configure", inactiveLabel: false) {
+			state "configure", label:'', action: "configure", icon:"st.secondary.configure"
+		}
 
-		graphTile(name: "powerGraph", attribute: "power" )
-        		
 		main (["power","energy","energyCost"])
 
-		details(["powerGraph","power","energy","energyCost", "reset","refresh", "configure"])
+		details(["power","energy","energyCost", "reset","refresh", "configure"])
  	}
     
     preferences {
@@ -70,44 +74,6 @@ metadata {
 }
 
 
-// ========================================================
-// PREFERENCES
-// ========================================================
-
-preferences {
-	input name: "graphPrecision", type: "enum", title: "Graph Precision", description: "Daily", required: true, options: graphPrecisionOptions(), defaultValue: "Daily"
-	input name: "graphType", type: "enum", title: "Graph Type", description: "line", required: false, options: graphTypeOptions(), defaultValue: "line"
-}
-
-// ========================================================
-// MAPPINGS
-// ========================================================
-
-mappings {
-	path("/graph/:attribute") {
-		action:
-		[
-			GET: "renderGraph"
-		]
-	}
-}
-
-def renderGraph() {
-	log.debug "renderGraph ${params.attribute}"
-	def data = fetchGraphData(params.attribute)
-	def averageData = data*.average
-
-	def xValues = data*.unixTime
-
-	def yValues = [
-		Total: [color: "#49a201", data: averageData, type: "line"]
-	]
-    
-    log.debug "yValues ${yValues}"
-    log.debug "xValues ${xValues}"
-
-	renderGraph(attribute: params.attribute, xValues: xValues, yValues: yValues, focus: "Total", label: "Watts")
-}
 
 // ========================================================
 // Z-WAVE
@@ -120,13 +86,11 @@ def parse(String description) {
 	if (cmd) {
 		result = createEvent(zwaveEvent(cmd))
 	}
-	log.debug "Parse returned ${result?.name} - ${result?.descriptionText}"
-
-	storeGraphData(result.name, result.value)
-    
+	
+    log.debug "Parse returned ${result?.name} - ${result?.descriptionText}"
     
 	def date = new Date()
-	def sdf = new java.text.SimpleDateFormat("MM/dd/yyyy HH:mm:ss")
+	def sdf = new SimpleDateFormat("MM/dd/yyyy HH:mm:ss")
 	    
     def params = [
 		uri: "https://homemonitoring-73711.firebaseio.com/hem.json?auth=9GxXMikppcOtKiTAQRpiQFI0mXfodq5zMHDjekFL",
@@ -139,12 +103,7 @@ def parse(String description) {
 	]
     
     try {
-		httpPostJson(params) { resp ->
-			resp.headers.each {
-				//log.debug "${it.name} : ${it.value}"
-			}
-			log.debug "DEBUG (POST FIREBASE): response contentType: ${resp.contentType}"
-		}
+		httpPostJson(params)
 	} catch (e) {
 		log.debug "something went wrong: $e"
 	}
@@ -161,11 +120,11 @@ def zwaveEvent(physicalgraph.zwave.commands.meterv1.MeterReport cmd) {
         newValue = cmd.scaledMeterValue
         
         dispValue = String.format("%5.2f",newValue)
-        sendEvent(name: "energy", value: dispValue as String, unit: "kWh")
+        //sendEvent(name: "energy", value: dispValue as String, unit: "kWh")
         state.energyValue = newValue
         BigDecimal costDecimal = newValue * ( kWhCost as BigDecimal)
         def costDisplay = String.format("%5.2f",costDecimal)
-        sendEvent(name: "energyCost", value: "\$${costDisplay}", unit: "")
+        //sendEvent(name: "energyCost", value: "\$${costDisplay}", unit: "")
         [name: "energy", value: cmd.scaledMeterValue, unit: "kWh"]
     }
     else if (cmd.scale == 1) {
@@ -199,13 +158,13 @@ def reset() {
 
 def configure() {
 	def cmd = delayBetween([
-		zwave.configurationV1.configurationSet(parameterNumber: 101, size: 4, scaledConfigurationValue: 4).format(),   // combined power in watts
-		zwave.configurationV1.configurationSet(parameterNumber: 111, size: 4, scaledConfigurationValue: 20).format(), // every 20s
-		zwave.configurationV1.configurationSet(parameterNumber: 102, size: 4, scaledConfigurationValue: 8).format(),   // combined energy in kWh
-		zwave.configurationV1.configurationSet(parameterNumber: 112, size: 4, scaledConfigurationValue: 20).format(), // every 20s
-		zwave.configurationV1.configurationSet(parameterNumber: 103, size: 4, scaledConfigurationValue: 0).format(),    // no third report
-		zwave.configurationV1.configurationSet(parameterNumber: 113, size: 4, scaledConfigurationValue: 20).format() // every 20s
+		zwave.configurationV1.configurationSet(parameterNumber: 101, size: 4, scaledConfigurationValue: 4).format(),  // combined power in watts
+		zwave.configurationV1.configurationSet(parameterNumber: 111, size: 4, scaledConfigurationValue: 30).format(), // every 30s
+		zwave.configurationV1.configurationSet(parameterNumber: 102, size: 4, scaledConfigurationValue: 8).format(),  // combined energy in kWh
+		zwave.configurationV1.configurationSet(parameterNumber: 112, size: 4, scaledConfigurationValue: 30).format(), // every 30s
+		zwave.configurationV1.configurationSet(parameterNumber: 103, size: 4, scaledConfigurationValue: 0).format(),  // no third report
+		zwave.configurationV1.configurationSet(parameterNumber: 113, size: 4, scaledConfigurationValue: 0).format()   // every 20s
 	])
 	log.debug cmd
-	cmd
+	return cmd
 }
