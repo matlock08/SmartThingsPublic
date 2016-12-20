@@ -79,7 +79,6 @@ metadata {
 // Z-WAVE
 // ========================================================
 
-
 def parse(String description) {
 	def result = null
 	def cmd = zwave.parse(description, [0x31: 1, 0x32: 1, 0x60: 3])
@@ -87,27 +86,28 @@ def parse(String description) {
 		result = createEvent(zwaveEvent(cmd))
 	}
 	
-    log.debug "Parse returned ${result?.name} - ${result?.descriptionText}"
+    log.debug "Parse returned ${result?.name} - ${result?.value}"
     
-	def date = new Date()
-	def sdf = new SimpleDateFormat("MM/dd/yyyy HH:mm:ss")
-	    
-    def params = [
-		uri: "https://homemonitoring-73711.firebaseio.com/hem.json?auth=9GxXMikppcOtKiTAQRpiQFI0mXfodq5zMHDjekFL",
-		body: [
-			"event": result?.name ,
-			"value": result?.value ,
-			"unit": result?.unit,
-            "date": sdf.format(date)
-		]
-	]
-    
-    try {
-		httpPostJson(params)
-	} catch (e) {
-		log.debug "something went wrong: $e"
-	}
+    def date = new Date()
+    def sdf = new SimpleDateFormat("MM/dd/yyyy HH:mm:ss")
 
+    def params = [
+        uri: "https://homemonitoring-73711.firebaseio.com/hem.json?auth=9GxXMikppcOtKiTAQRpiQFI0mXfodq5zMHDjekFL",
+        body: [
+            "event": result?.name ,
+             "value": result?.value ,
+             "unit": result?.unit,
+             "date": sdf.format(date)
+        ]
+    ]
+
+    try {
+        httpPostJson(params)
+    } catch (e) {
+        log.debug "something went wrong: $e"
+    }
+    
+	
 	return result
 }
 
