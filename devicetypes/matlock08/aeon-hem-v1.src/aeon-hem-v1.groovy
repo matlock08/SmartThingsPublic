@@ -82,11 +82,12 @@ metadata {
 def parse(String description) {
 	def result = null
 	def cmd = zwave.parse(description, [0x31: 1, 0x32: 1, 0x60: 3])
+    log.debug "cmd $cmd"
 	if (cmd) {
 		result = createEvent(zwaveEvent(cmd))
 	}
 	
-    log.debug "Parse returned ${result?.name} - ${result?.value}"
+    log.debug "Parse returned ${result?.name} : ${result?.value}"
     
     def date = new Date()
     def sdf = new SimpleDateFormat("MM/dd/yyyy HH:mm:ss")
@@ -101,11 +102,11 @@ def parse(String description) {
         ]
     ]
 
-    try {
-        httpPostJson(params)
-    } catch (e) {
-        log.debug "something went wrong: $e"
-    }
+    //try {
+    //    httpPostJson(params)
+    //} catch (e) {
+    //    log.debug "something went wrong: $e"
+    //}
     
 	
 	return result
@@ -115,6 +116,8 @@ def zwaveEvent(physicalgraph.zwave.commands.meterv1.MeterReport cmd) {
 
     def dispValue
     def newValue
+    
+    cmd.meterType
     
 	if (cmd.scale == 0) {	
         newValue = cmd.scaledMeterValue
@@ -158,13 +161,28 @@ def reset() {
 
 def configure() {
 	def cmd = delayBetween([
-		zwave.configurationV1.configurationSet(parameterNumber: 101, size: 4, scaledConfigurationValue: 4).format(),  // combined power in watts
+        // FActory Reset
+        //zwave.configurationV1.configurationSet(parameterNumber: 255, size: 4, scaledConfigurationValue: 1).format()
+        
+        zwave.configurationV1.configurationSet(parameterNumber: 1, size: 2, scaledConfigurationValue: 120).format(),		// assumed voltage
+		zwave.configurationV1.configurationSet(parameterNumber: 3, size: 1, scaledConfigurationValue: 0).format(),			// Disable (=0) selective reporting
+		zwave.configurationV1.configurationSet(parameterNumber: 9, size: 1, scaledConfigurationValue: 0).format(),			// Or by 10% (L1)
+      	zwave.configurationV1.configurationSet(parameterNumber: 10, size: 1, scaledConfigurationValue: 0).format(),			// Or by 10% (L2)
+		zwave.configurationV1.configurationSet(parameterNumber: 20, size: 1, scaledConfigurationValue: 1).format(),         // USB Powered
+    	zwave.configurationV1.configurationSet(parameterNumber: 101, size: 4, scaledConfigurationValue: 4).format(),  // combined power in watts
 		zwave.configurationV1.configurationSet(parameterNumber: 111, size: 4, scaledConfigurationValue: 30).format(), // every 30s
-		zwave.configurationV1.configurationSet(parameterNumber: 102, size: 4, scaledConfigurationValue: 8).format(),  // combined energy in kWh
-		zwave.configurationV1.configurationSet(parameterNumber: 112, size: 4, scaledConfigurationValue: 30).format(), // every 30s
-		zwave.configurationV1.configurationSet(parameterNumber: 103, size: 4, scaledConfigurationValue: 0).format(),  // no third report
+		zwave.configurationV1.configurationSet(parameterNumber: 102, size: 4, scaledConfigurationValue: 0).format(),  // combined energy in kWh
+		zwave.configurationV1.configurationSet(parameterNumber: 112, size: 4, scaledConfigurationValue: 0).format(), // every 30s
+        zwave.configurationV1.configurationSet(parameterNumber: 103, size: 4, scaledConfigurationValue: 0).format(),  // no third report
 		zwave.configurationV1.configurationSet(parameterNumber: 113, size: 4, scaledConfigurationValue: 0).format()   // every 20s
-	])
+        
+		//zwave.configurationV1.configurationSet(parameterNumber: 101, size: 4, scaledConfigurationValue: 4).format(),  // combined power in watts
+		//zwave.configurationV1.configurationSet(parameterNumber: 111, size: 4, scaledConfigurationValue: 30).format(), // every 30s
+		//zwave.configurationV1.configurationSet(parameterNumber: 102, size: 4, scaledConfigurationValue: 8).format(),  // combined energy in kWh
+		//zwave.configurationV1.configurationSet(parameterNumber: 112, size: 4, scaledConfigurationValue: 30).format(), // every 30s
+		//zwave.configurationV1.configurationSet(parameterNumber: 103, size: 4, scaledConfigurationValue: 0).format(),  // no third report
+		//zwave.configurationV1.configurationSet(parameterNumber: 113, size: 4, scaledConfigurationValue: 0).format()   // every 20s
+	],2000)
 	log.debug cmd
 	return cmd
 }
