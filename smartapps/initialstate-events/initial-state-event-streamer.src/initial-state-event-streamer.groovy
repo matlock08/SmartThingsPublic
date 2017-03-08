@@ -62,76 +62,6 @@ preferences {
     }
 }
 
-mappings {
-	path("/access_key") {
-		action: [
-			GET: "getAccessKey",
-			PUT: "setAccessKey"
-		]
-	}
-	path("/bucket") {
-		action: [
-			GET: "getBucketKey",
-			PUT: "setBucketKey"
-		]
-	}
-}
-
-def getAccessKey() {
-	log.trace "get access key"
-	if (atomicState.accessKey == null) {
-		httpError(404, "Access Key Not Found")
-	} else {
-		[
-			accessKey: atomicState.accessKey
-		]
-	}
-}
-
-def getBucketKey() {
-	log.trace "get bucket key"
-	if (atomicState.bucketKey == null) {
-		httpError(404, "Bucket key Not Found")
-	} else {
-		[
-			bucketKey: atomicState.bucketKey,
-			bucketName: atomicState.bucketName
-		]
-	}
-}
-
-def setBucketKey() {
-	log.trace "set bucket key"
-	def newBucketKey = request.JSON?.bucketKey
-	def newBucketName = request.JSON?.bucketName
-
-	log.debug "bucket name: $newBucketName"
-	log.debug "bucket key: $newBucketKey"
-
-	if (newBucketKey && (newBucketKey != atomicState.bucketKey || newBucketName != atomicState.bucketName)) {
-		atomicState.bucketKey = "$newBucketKey"
-		atomicState.bucketName = "$newBucketName"
-		atomicState.isBucketCreated = false
-	}
-
-	tryCreateBucket()
-}
-
-def setAccessKey() {
-	log.trace "set access key"
-	def newAccessKey = request.JSON?.accessKey
-	def newGrokerSubdomain = request.JSON?.grokerSubdomain
-
-	if (newGrokerSubdomain && newGrokerSubdomain != "" && newGrokerSubdomain != atomicState.grokerSubdomain) {
-		atomicState.grokerSubdomain = "$newGrokerSubdomain"
-		atomicState.isBucketCreated = false
-	}
-
-	if (newAccessKey && newAccessKey != atomicState.accessKey) {
-		atomicState.accessKey = "$newAccessKey"
-		atomicState.isBucketCreated = false
-	}
-}
 
 def subscribeToEvents() {
 	if (accelerometers != null) {
@@ -259,76 +189,21 @@ def uninstalled() {
 	log.debug "uninstalled (version $atomicState.version)"
 }
 
-def tryCreateBucket() {
-
-	// can't ship events if there is no grokerSubdomain
-	if (atomicState.grokerSubdomain == null || atomicState.grokerSubdomain == "") {
-		log.error "streaming url is currently null"
-		return
-	}
-
-	// if the bucket has already been created, no need to continue
-	if (atomicState.isBucketCreated) {
-		return
-	}
-
-	if (!atomicState.bucketName) {
-    	atomicState.bucketName = atomicState.bucketKey
-    }
-    if (!atomicState.accessKey) {
-    	return
-    }
-	def bucketName = "${atomicState.bucketName}"
-	def bucketKey = "${atomicState.bucketKey}"
-	def accessKey = "${atomicState.accessKey}"
-
-	def bucketCreateBody = new JsonSlurper().parseText("{\"bucketKey\": \"$bucketKey\", \"bucketName\": \"$bucketName\"}")
-
-	def bucketCreatePost = [
-		uri: "https://${atomicState.grokerSubdomain}.initialstate.com/api/buckets",
-		headers: [
-			"Content-Type": "application/json",
-			"X-IS-AccessKey": accessKey
-		],
-		body: bucketCreateBody
-	]
-
-	log.debug bucketCreatePost
-
-	try {
-		// Create a bucket on Initial State so the data has a logical grouping
-		httpPostJson(bucketCreatePost) { resp ->
-			log.debug "bucket posted"
-			if (resp.status >= 400) {
-				log.error "bucket not created successfully"
-			} else {
-				atomicState.isBucketCreated = true
-			}
-		}
-	} catch (e) {
-		log.error "bucket creation error: $e"
-	}
-
-}
-
 def genericHandler(evt) {
-	log.trace "$evt.displayName($evt.name:$evt.unit) $evt.value"
-
-	def key = "$evt.displayName($evt.name)"
-	if (evt.unit != null) {
-		key = "$evt.displayName(${evt.name}_$evt.unit)"
-	}
+	log.trace "$evt.name-$evt.displayName-$evt.unit-$evt.value"
+    
+    def name = "$evt.name"
+    def displayName = "$evt.displayName"
+    def unit = "$evt.unit"
 	def value = "$evt.value"
 
-	tryCreateBucket()
-
-	eventHandler(key, value)
+	eventHandler(name, displayName, unit, value)
 }
 
-def eventHandler(name, value) {
+def eventHandler(name, displayName, unit, value) {
 	def epoch = now() / 1000
 
-	def event = new JsonSlurper().parseText("{\"key\": \"$name\", \"value\": \"$value\", \"epoch\": \"$epoch\"}")
+	def event = new JsonSlurper().parseText("{\"name\": \"$name\", \"displayName\": \"$displayName\",\"unit\": \"$unit\",\"value\": \"$value\", \"epoch\": \"$epoch\"}")
 
 	tryShipEvents(event)
 	
@@ -336,27 +211,12 @@ def eventHandler(name, value) {
 }
 
 def tryShipEvents(event) {
-
-	def grokerSubdomain = atomicState.grokerSubdomain
-	// can't ship events if there is no grokerSubdomain
-	if (grokerSubdomain == null || grokerSubdomain == "") {
-		log.error "streaming url is currently null"
-		return
-	}
-	def accessKey = atomicState.accessKey
-	def bucketKey = atomicState.bucketKey
-	// can't ship if access key and bucket key are null, so finish trying
-	if (accessKey == null || bucketKey == null) {
-		return
-	}
+    log.debug "https://roni-nodered.herokuapp.com/event " + event
 
 	def eventPost = [
-		uri: "https://${grokerSubdomain}.initialstate.com/api/events",
+	    uri: "https://roni-nodered.herokuapp.com/event",
 		headers: [
-			"Content-Type": "application/json",
-			"X-IS-BucketKey": "${bucketKey}",
-			"X-IS-AccessKey": "${accessKey}",
-			"Accept-Version": "0.0.2"
+			"Content-Type": "application/json"
 		],
 		body: event
 	]
