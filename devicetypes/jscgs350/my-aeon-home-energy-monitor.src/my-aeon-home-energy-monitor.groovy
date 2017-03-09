@@ -181,7 +181,7 @@ def parse(String description) {
 }
 
 def zwaveEvent(physicalgraph.zwave.commands.meterv1.MeterReport cmd) {
-    log.debug "zwaveEvent received ${cmd}"
+    
     def dispValue
     def newValue
     def timeString = new Date().format("MM-dd-yy h:mm a", location.timeZone)

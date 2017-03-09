@@ -34,9 +34,6 @@ metadata {
 		command "ledOff"
 		command "ledAuto"
         
-		command "preset1"
-		command "preset2"
-		command "preset3"
 	}
     
     preferences {
@@ -47,11 +44,6 @@ metadata {
         input("hdcamera", "bool", title:"HD Foscam Camera? (9xxx Series)", description: "Type of Foscam Camera", required: true, displayDuringSetup: true)
         input("mirror", "bool", title:"Mirror? (Not required for HD cameras)", description: "Camera Mirrored?")
         input("flip", "bool", title:"Flip? (Not required for HD cameras)", description: "Camera Flipped?")
-		input("preset1", "text", title: "Preset 1 (For HD cameras only)", description: "Name of your first preset position")
-		input("preset2", "text", title: "Preset 2 (For HD cameras only)", description: "Name of your second preset position")
-		input("preset3", "text", title: "Preset 3 (For HD cameras only)", description: "Name of your third preset position")
-		input("cruisemap1", "text", title: "Cruise Map 1 (For HD cameras only. Non-HD cameras will default to Horizontal.)", description: "Name of your first cruise map", defaultValue: "Horizontal")
-		input("cruisemap2", "text", title: "Cruise Map 2 (For HD cameras only. Non-HD cameras will default to Vertical.)", description: "Name of your second cruise map", defaultValue: "Vertical")
 	}
 
 	tiles {
@@ -260,8 +252,6 @@ def parse(String description) {
             def motionAlarm = "$langs.motionDetectAlarm"
             def ledMode = "$langs.infraLedState"
             def result = "$langs.result"
-            
-            log.debug("Result " + result)
             
             if (result == "0") {
 
