@@ -173,7 +173,7 @@ def parse(String description) {
     if (cmd) {
         result = createEvent(zwaveEvent(cmd))
     }
-    if (result) log.debug "Parse returned ${result}"
+    
     def statusTextmsg = ""
 	statusTextmsg = "Min was ${device.currentState('powerOne')?.value}\nMax was ${device.currentState('powerTwo')?.value}\n"
     sendEvent("name":"statusText", "value":statusTextmsg)
