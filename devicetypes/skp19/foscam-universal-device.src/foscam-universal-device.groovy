@@ -53,6 +53,7 @@ metadata {
         standardTile("camera", "device.alarmStatus", width: 1, height: 1, canChangeIcon: true, inactiveLabel: true, canChangeBackground: true) {
           state "off", label: "off", action: "toggleAlarm", icon: "st.camera.dropcam-centered", backgroundColor: "#FFFFFF"
           state "on", label: "on", action: "toggleAlarm", icon: "st.camera.dropcam-centered",  backgroundColor: "#53A7C0"
+          state "alarm", label: "alarm", action: "toggleAlarm", icon: "st.camera.dropcam-centered",  backgroundColor: "#FF0000"
         }
 
 		standardTile("take", "device.image", width: 1, height: 1, canChangeIcon: false, inactiveLabel: true, canChangeBackground: false) {
