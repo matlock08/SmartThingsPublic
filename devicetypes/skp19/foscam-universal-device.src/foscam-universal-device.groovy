@@ -34,15 +34,6 @@ metadata {
 		command "ledOff"
 		command "ledAuto"
         
-		command "left"
-		command "right"
-		command "up"
-		command "down"
-        
-		command "cruisemap1"
-		command "cruisemap2"
-		command "stopCruise"
-        
 		command "preset1"
 		command "preset2"
 		command "preset3"
@@ -96,64 +87,6 @@ metadata {
           state "manual", label: "auto", action: "ledAuto", icon: "st.Lighting.light13", backgroundColor: "#FFFFFF"
         }
 
-        standardTile("ledOn", "device.ledStatus", width: 1, height: 1, canChangeIcon: false, inactiveLabel: true, canChangeBackground: false) {
-          state "auto", label: "on", action: "ledOn", icon: "st.Lighting.light11", backgroundColor: "#FFFFFF"
-          state "off", label: "on", action: "ledOn", icon: "st.Lighting.light11", backgroundColor: "#FFFFFF"
-          state "on", label: "on", action: "ledOn", icon: "st.Lighting.light11", backgroundColor: "#FFFF00"
-          state "manual", label: "on", action: "ledOn", icon: "st.Lighting.light11", backgroundColor: "#00FF00"
-        }
-        
-        standardTile("ledOff", "device.ledStatus", width: 1, height: 1, canChangeIcon: false, inactiveLabel: true, canChangeBackground: false) {
-          state "auto", label: "off", action: "ledOff", icon: "st.Lighting.light13", backgroundColor: "#FFFFFF"
-          state "off", label: "off", action: "ledOff", icon: "st.Lighting.light13", backgroundColor: "#53A7C0"
-          state "on", label: "off", action: "ledOff", icon: "st.Lighting.light13", backgroundColor: "#FFFFFF"
-          state "manual", label: "off", action: "ledOff", icon: "st.Lighting.light13", backgroundColor: "#00FF00"
-        }
-        
-		standardTile("preset1", "device.image", width: 1, height: 1, canChangeIcon: false, canChangeBackground: false, decoration: "flat") {
-			state "preset1", label: "preset 1", action: "preset1", icon: ""
-		}
-
-		standardTile("preset2", "device.image", width: 1, height: 1, canChangeIcon: false, canChangeBackground: false, decoration: "flat") {
-			state "preset2", label: "preset 2", action: "preset2", icon: ""
-		}
-
-		standardTile("preset3", "device.image", width: 1, height: 1, canChangeIcon: false, canChangeBackground: false, decoration: "flat") {
-			state "preset3", label: "preset 3", action: "preset3", icon: ""
-		}
-        
-		standardTile("cruisemap1", "device.image", width: 1, height: 1, canChangeIcon: false, canChangeBackground: false, decoration: "flat") {
-			state "cruisemap1", label: "Cruise Map 1", action: "cruisemap1", icon: ""
-		}
-
-		standardTile("cruisemap2", "device.image", width: 1, height: 1, canChangeIcon: false, canChangeBackground: false, decoration: "flat") {
-			state "cruisemap2", label: "Cruise Map 2", action: "cruisemap2", icon: ""
-		}
- 
- 		standardTile("stopcruise", "device.image", width: 1, height: 1, canChangeIcon: false, canChangeBackground: false, decoration: "flat") {
-			state "stopcruise", label: "Stop Cruise", action: "stopCruise", icon: ""
-		}
-
-		standardTile("left", "device.image", width: 1, height: 1, canChangeIcon: false,  canChangeBackground: false, decoration: "flat") {
-			state "left", label: "left", action: "left", icon: ""
-		}
-
-		standardTile("right", "device.image", width: 1, height: 1, canChangeIcon: false,  canChangeBackground: false, decoration: "flat") {
-			state "right", label: "right", action: "right", icon: ""
-		}
-
-		standardTile("up", "device.image", width: 1, height: 1, canChangeIcon: false, canChangeBackground: false, decoration: "flat") {
-			state "up", label: "up", action: "up", icon: "st.thermostat.thermostat-up"
-		}
-
-		standardTile("down", "device.image", width: 1, height: 1, canChangeIcon: false, canChangeBackground: false, decoration: "flat") {
-			state "down", label: "down", action: "down", icon: "st.thermostat.thermostat-down"
-		}
-
-		standardTile("stop", "device.image", width: 1, height: 1, canChangeIcon: false,  canChangeBackground: false, decoration: "flat") {
-			state "stop", label: "", action: "stopCruise", icon: "st.sonos.stop-btn"
-		}
-
         standardTile("refresh", "device.alarmStatus", inactiveLabel: false, decoration: "flat") {
           state "refresh", action:"polling.poll", icon:"st.secondary.refresh"
         }
@@ -163,8 +96,7 @@ metadata {
         }
 
         main "camera"
-			details(["cameraDetails", "take", "blank", "alarmStatus", "ledAuto", "ledOn", "ledOff", "refresh"]) //**Uncomment this line and comment out the next line to hide the PTZ controls
-			//details(["cameraDetails", "take", "blank", "alarmStatus", "ledAuto", "ledOn", "ledOff", "preset1", "preset2", "preset3", "cruisemap1", "cruisemap2", "stopcruise", "blank", "up", "blank", "left", "stop", "right", "blank", "down", "blank", "refresh"])
+			details(["cameraDetails", "take", "blank", "alarmStatus", "ledAuto", "blank", "refresh"]) //**Uncomment this line and comment out the next line to hide the PTZ controls
 	}
 }
 
@@ -186,8 +118,7 @@ def toggleAlarm() {
 	log.debug "Toggling Alarm"
 	if(device.currentValue("alarmStatus") == "on") {
     	alarmOff()
-  	}
-	else {
+  	} else {
     	alarmOn()
 	}
 }
@@ -222,13 +153,9 @@ def toggleLED() {
 
   if(device.currentValue("ledStatus") == "auto") {
     ledOn()
-  }
-
-  else if(device.currentValue("ledStatus") == "on") {
+  } else if(device.currentValue("ledStatus") == "on") {
     ledOff()
-  }
-  
-  else {
+  } else {
     ledAuto()
   }
 }
@@ -249,8 +176,7 @@ def ledOff() {
     sendEvent(name: "ledStatus", value: "off");
     if(hdcamera == "true") {
     	delayBetween([hubGet("cmd=setInfraLedConfig&mode=1"), hubGet("cmd=closeInfraLed")])
-    }
-    else {
+    } else {
     	hubGet("/decoder_control.cgi?command=94&")
     }
 }
@@ -260,143 +186,20 @@ def ledAuto() {
     sendEvent(name: "ledStatus", value: "auto");
 	if(hdcamera == true) {
 		hubGet("cmd=setInfraLedConfig&mode=0")
-    }
-    else {
+    } else {
     	hubGet("/decoder_control.cgi?command=95&")
     }
 }
 //END LED ACTIONS
 
-//PRESET ACTIONS
-def preset1() {
-	log.debug("Preset 1 Selected - ${preset1}")
-	if(hdcamera == true) {
-		hubGet("cmd=ptzGotoPresetPoint&name=${preset1}")
-    }
-    else {
-    	hubGet("/decoder_control.cgi?command=31&")
-    }
-}
-
-def preset2() {
-	log.debug("Preset 2 Selected - ${preset2}")
-	if(hdcamera == true) {
-		hubGet("cmd=ptzGotoPresetPoint&name=${preset2}")
-    }
-    else {
-    	hubGet("/decoder_control.cgi?command=33&")
-    }
-}
-
-def preset3() {
-	log.debug("Preset 3 Selected - ${preset3}")
-	if(hdcamera == true) {
-		hubGet("cmd=ptzGotoPresetPoint&name=${preset3}")
-    }
-    else {
-    	hubGet("/decoder_control.cgi?command=35&")
-    }
-}
-//END PRESET ACTIONS
-
-//CRUISE ACTIONS
-def cruisemap1() {
-	log.debug("Cruise Map 1 Selected - ${cruisemap1}")
-	if(hdcamera == true) {
-		hubGet("cmd=ptzStartCruise&mapName=${cruisemap1}")
-    }
-    else {
-    	hubGet("/decoder_control.cgi?command=28&")
-    }
-}
-
-def cruisemap2() {
-	log.debug("Cruise Map 2 Selected - ${cruisemap2}")
-	if(hdcamera == true) {
-		hubGet("cmd=ptzStartCruise&mapName=${cruisemap2}")
-    }
-    else {
-    	hubGet("/decoder_control.cgi?command=26&")
-    }
-}
-
-def stopCruise() {
-	log.debug("Stop Cruise")
-	if(hdcamera == true) {
-		hubGet("cmd=ptzStopRun")
-    }
-    else {
-    	delayBetween([hubGet("/decoder_control.cgi?command=29&"), hubGet("/decoder_control.cgi?command=27&")])
-    }
-}
-//END CRUISE ACTIONS
-
-//PTZ CONTROLS
-def left() {
-	if(hdcamera == "true") {
-		delayBetween([hubGet("cmd=ptzMoveLeft"), hubGet("cmd=ptzStopRun")])
-    }
-    else {
-    	if(mirror == "true") {
-	    	hubGet("/decoder_control.cgi?command=4&onestep=1&")
-        }
-        else {
-        	hubGet("/decoder_control.cgi?command=6&onestep=1&")
-        }
-    }
-}
-
-def right() {
-	if(hdcamera == "true") {
-		delayBetween([hubGet("cmd=ptzMoveRight"), hubGet("cmd=ptzStopRun")])
-    }
-    else {
-    	if(mirror == "true") {
-	    	hubGet("/decoder_control.cgi?command=6&onestep=1&")
-        }
-        else {
-        	hubGet("/decoder_control.cgi?command=4&onestep=1&")
-        }
-    }
-}
-
-def up() {
-	if(hdcamera == true) {
-        delayBetween([hubGet("cmd=ptzMoveUp"), hubGet("cmd=ptzStopRun")])
-    }
-    else {
-    	if(flip == true) {
-	    	hubGet("/decoder_control.cgi?command=2&onestep=1&")
-        }
-        else {
-        	hubGet("/decoder_control.cgi?command=0&onestep=1&")
-        }
-    }
-}
-
-def down() {
-	if(hdcamera == true) {
-        delayBetween([hubGet("cmd=ptzMoveDown"), hubGet("cmd=ptzStopRun")])
-    }
-    else {
-    	if(flip == true) {
-    		hubGet("/decoder_control.cgi?command=0&onestep=1&")
-        }
-        else {
-        	hubGet("/decoder_control.cgi?command=2&onestep=1&")
-        }
-    }
-}
-//END PTZ CONTROLS
 
 def poll() {
 
 	sendEvent(name: "hubactionMode", value: "local");
     //Poll Motion Alarm Status and IR LED Mode
     if(hdcamera == true) {
-		delayBetween([hubGet("cmd=getMotionDetectConfig"), hubGet("cmd=getInfraLedConfig")])
-    }
-    else {
+		hubGet("cmd=getDevState")
+    } else {
     	hubGet("/get_params.cgi?")
     }
 }
@@ -404,8 +207,7 @@ def poll() {
 private getLogin() {
 	if(hdcamera == true) {
     	return "usr=${username}&pwd=${password}&"
-    }
-    else {
+    } else {
     	return "user=${username}&pwd=${password}"
     }
 }
@@ -415,17 +217,15 @@ private hubGet(def apiCommand) {
     def iphex = convertIPtoHex(ip)
     def porthex = convertPortToHex(port)
     device.deviceNetworkId = "$iphex:$porthex"
-    log.debug "Device Network Id set to ${iphex}:${porthex}"
-
-	log.debug("Executing hubaction on " + getHostAddress())
-    def uri = ""
+    
+	def uri = ""
     if(hdcamera == true) {
     	uri = "/cgi-bin/CGIProxy.fcgi?" + getLogin() + apiCommand
-	}
-    else {
+	} else {
     	uri = apiCommand + getLogin()
     }
-    log.debug uri
+    log.debug("Executing hubaction on " + getHostAddress() + uri )
+    
     def hubAction = new physicalgraph.device.HubAction(
     	method: "GET",
         path: uri,
@@ -440,8 +240,7 @@ private hubGet(def apiCommand) {
 
 //Parse events into attributes
 def parse(String description) {
-	log.debug "Parsing '${description}'"
-    
+	
     def map = [:]
     def retResult = []
     def descMap = parseDescriptionAsMap(description)
@@ -454,39 +253,39 @@ def parse(String description) {
 	//Status Polling
     else if (descMap["headers"] && descMap["body"]) {
         def body = new String(descMap["body"].decodeBase64())
+        
         if(hdcamera == true) {
             def langs = new XmlSlurper().parseText(body)
 
-            def motionAlarm = "$langs.isEnable"
-            def ledMode = "$langs.mode"
+            def motionAlarm = "$langs.motionDetectAlarm"
+            def ledMode = "$langs.infraLedState"
+            def result = "$langs.result"
+            
+            log.debug("Result " + result)
+            
+            if (result == "0") {
 
-            //Get Motion Alarm Status
-            if(motionAlarm == "0") {
-                log.info("Polled: Alarm Off")
-                sendEvent(name: "alarmStatus", value: "off");
-            }
-            else if(motionAlarm == "1") {
-                log.info("Polled: Alarm On")
-                sendEvent(name: "alarmStatus", value: "on");
-            }
+                //Get Motion Alarm Status
+                if(motionAlarm == "0") {
+                    sendEvent(name: "alarmStatus", value: "off");
+                } else if(motionAlarm == "1") {
+                    sendEvent(name: "alarmStatus", value: "on");
+                } else if (motionAlarm == "2") {
+                    sendEvent(name: "alarmStatus", value: "alarm");
+                }
 
-            //Get IR LED Mode
-            if(ledMode == "0") {
-                log.info("Polled: LED Mode Auto")
-                sendEvent(name: "ledStatus", value: "auto")
+                //Get IR LED Mode
+                if(ledMode == "0") {                    
+                    sendEvent(name: "ledStatus", value: "auto")
+                } else if(ledMode == "1") {
+                    sendEvent(name: "ledStatus", value: "manual")
+                }
+                
             }
-            else if(ledMode == "1") {
-                log.info("Polled: LED Mode Manual")
-                sendEvent(name: "ledStatus", value: "manual")
-            }
-    	}
-        else {
+    	} else {
         	if(body.find("alarm_motion_armed=0")) {
-				log.info("Polled: Alarm Off")
                 sendEvent(name: "alarmStatus", value: "off")
-            }
-        	else if(body.find("alarm_motion_armed=1")) {
-				log.info("Polled: Alarm On")
+            } else if(body.find("alarm_motion_armed=1")) {
                 sendEvent(name: "alarmStatus", value: "on")
             }
             //The API does not provide a way to poll for LED status on 8xxx series at the moment
