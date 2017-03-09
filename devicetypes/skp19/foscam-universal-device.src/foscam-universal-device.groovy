@@ -20,6 +20,7 @@ metadata {
 	definition (name: "Foscam Universal Device", namespace: "skp19", author: "skp19") {
 		capability "Polling"
 		capability "Image Capture"
+        capability "Motion Sensor"
         
         attribute "alarmStatus", "string"
         attribute "ledStatus",   "string"
@@ -258,10 +259,13 @@ def parse(String description) {
                 //Get Motion Alarm Status
                 if(motionAlarm == "0") {
                     sendEvent(name: "alarmStatus", value: "off");
+                    sendEvent(name: "motion", value: "inactive");
                 } else if(motionAlarm == "1") {
                     sendEvent(name: "alarmStatus", value: "on");
+                    sendEvent(name: "motion", value: "inactive");
                 } else if (motionAlarm == "2") {
                     sendEvent(name: "alarmStatus", value: "alarm");
+                    sendEvent(name: "motion", value: "active");
                 }
 
                 //Get IR LED Mode
