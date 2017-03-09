@@ -190,8 +190,7 @@ def uninstalled() {
 }
 
 def genericHandler(evt) {
-	log.trace "$evt.name-$evt.displayName-$evt.unit-$evt.value"
-    
+	
     def name = "$evt.name"
     def displayName = "$evt.displayName"
     def unit = "$evt.unit"
@@ -207,7 +206,6 @@ def eventHandler(name, displayName, unit, value) {
 
 	tryShipEvents(event)
 	
-	log.debug "Shipped Event: " + event
 }
 
 def tryShipEvents(event) {
