@@ -30,6 +30,7 @@ definition(
     oauth: [displayName: "Initial State", displayLink: "https://www.initialstate.com"])
 
 import groovy.json.JsonSlurper
+import groovy.json.JsonOutput
 
 preferences {
 	section("Choose which devices to monitor...") {
@@ -200,33 +201,37 @@ def genericHandler(evt) {
 }
 
 def eventHandler(name, displayName, unit, value) {
-	def epoch = now() / 1000
+	def epoch = new Date().format("yyyy-MM-dd'T'HH:mm:ss'Z'", TimeZone.getTimeZone("America/Monterrey")) 
 
-	def event = new JsonSlurper().parseText("{\"name\": \"$name\", \"displayName\": \"$displayName\",\"unit\": \"$unit\",\"value\": \"$value\", \"epoch\": \"$epoch\"}")
+	def event = JsonOutput.toJson(new JsonSlurper().parseText("{\"name\": \"$name\", \"displayName\": \"$displayName\",\"unit\": \"$unit\",\"value\": $value, \"epoch\": \"$epoch\"}"))
 
 	tryShipEvents(event)
 	
 }
 
 def tryShipEvents(event) {
-    log.debug "https://roni-nodered.herokuapp.com/event " + event
+    //log.debug "https://h92jmf8qo4.execute-api.us-west-2.amazonaws.com/prod/smartthingEventsListener"
+    //log.debug event
 
 	def eventPost = [
-	    uri: "https://roni-nodered.herokuapp.com/event",
+	    uri: "https://h92jmf8qo4.execute-api.us-west-2.amazonaws.com/prod/smartthingEventsListener",
 		headers: [
+            "x-api-key": "KxBWj9XYL49yf4bE0CQkYaer2FgvsLTd6OduRNt8",
 			"Content-Type": "application/json"
 		],
 		body: event
 	]
 
 	try {
-		// post the events to initial state
-		httpPostJson(eventPost) { resp ->
-			log.debug "shipped events and got ${resp.status}"
-			if (resp.status >= 400) {
-				log.error "shipping failed... ${resp.data}"
-			}
-		}
+    	if ( false ) {
+            // post the events to initial state
+            httpPostJson(eventPost) { resp ->
+                log.debug "shipped events and got ${resp.status}"
+                if (resp.status >= 400) {
+                    log.error "shipping failed... ${resp.data}"
+                }
+            }
+        }
 	} catch (e) {
 		log.error "shipping events failed: $e"
 	}
