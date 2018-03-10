@@ -201,9 +201,10 @@ def genericHandler(evt) {
 }
 
 def eventHandler(name, displayName, unit, value) {
-	def epoch = new Date().format("yyyy-MM-dd'T'HH:mm:ss'Z'", TimeZone.getTimeZone("America/Monterrey")) 
+	def date = new Date().format("yyyy-MM-dd'T'HH:mm", TimeZone.getTimeZone("America/Monterrey")) 
+    def epoch = new Date().format("yyyy-MM-dd'T'HH:mm:ss.SSSZ", TimeZone.getTimeZone("America/Monterrey"))
 
-	def event = JsonOutput.toJson(new JsonSlurper().parseText("{\"name\": \"$name\", \"displayName\": \"$displayName\",\"unit\": \"$unit\",\"value\": $value, \"epoch\": \"$epoch\"}"))
+	def event = JsonOutput.toJson(new JsonSlurper().parseText("{\"DATE\": \"$date\",\"name\": \"$name\", \"displayName\": \"$displayName\",\"unit\": \"$unit\",\"value\": $value, \"fulldate\": \"$epoch\"}"))
 
 	tryShipEvents(event)
 	
@@ -223,7 +224,7 @@ def tryShipEvents(event) {
 	]
 
 	try {
-    	if ( false ) {
+    	if ( true ) {
             // post the events to initial state
             httpPostJson(eventPost) { resp ->
                 log.debug "shipped events and got ${resp.status}"
